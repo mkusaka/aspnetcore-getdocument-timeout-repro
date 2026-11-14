@@ -27,6 +27,25 @@ error MSB3073: The command "dotnet ".../dotnet-getdocument.dll" --assembly ".../
 
 With `EndpointsPerDocument = 300` the same build succeeds (about 35 seconds).
 
+## Splitting into one process per document does not help
+
+Running `dotnet-getdocument` once per document (`--document-name docN --file-name docN`, after `dotnet build -p:OpenApiGenerateDocuments=false`) takes about the same time per process at this size:
+
+| document | time | result |
+|---|---|---|
+| doc0 | 115s | written |
+| doc1 | 120s | `TimeoutException: ... timed out after 2 minutes.` |
+| doc2 | 109s | written |
+
+```sh
+G=~/.nuget/packages/microsoft.extensions.apidescription.server/10.0.12/tools/dotnet-getdocument.dll
+dotnet build -p:OpenApiGenerateDocuments=false
+dotnet "$G" --assembly bin/Debug/net10.0/Repro.dll --file-list out/doc0.cache \
+  --framework .NETCoreApp,Version=v10.0 --output out --project Repro \
+  --assets-file obj/project.assets.json --platform AnyCPU \
+  --document-name doc0 --file-name doc0
+```
+
 ## Expected
 
 A way to raise the timeout (CLI option / MSBuild property), since the limit is hardcoded:
